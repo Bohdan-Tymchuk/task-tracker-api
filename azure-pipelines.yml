@@ -43,11 +43,12 @@ steps:
       failTaskOnFailedTests: true
     condition: succeededOrFailed()
 
-  - task: PublishCodeCoverageResults@1
+  - task: PublishCodeCoverageResults@2
     inputs:
       codeCoverageTool: 'JaCoCo'
       summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/jacoco.xml'
       reportDirectory: '$(System.DefaultWorkingDirectory)/**/site/jacoco'
+      failIfCoverageEmpty: true
     condition: succeededOrFailed()
 
   - task: PublishBuildArtifacts@1
