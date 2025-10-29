@@ -3,12 +3,14 @@ trigger:
     include:
       - main
       - development
+      - feat/sonarcloud
 
 pr:
   branches:
     include:
       - main
       - development
+      - feat/sonarcloud
 
 pool:
   vmImage: ubuntu-latest
