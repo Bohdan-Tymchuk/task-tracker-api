@@ -35,7 +35,7 @@ steps:
       jdkArchitectureOption: 'x64'
       jdkSourceOption: 'PreInstalled'
 
-  - task: SonarCloudPrepare@1
+  - task: SonarCloudPrepare@2
     displayName: Prepare SonarCloud analysis
     inputs:
       SonarCloud: 'SonarCloudServiceConnection'
@@ -45,6 +45,9 @@ steps:
       projectKey: 'X00229514_task-tracker-api'
       projectName: 'Task Tracker API'
       extraProperties: |
+        sonar.projectKey=X00229514_task-tracker-api
+        sonar.projectName=Task Tracker API
+        sonar.organization=X00229514
         sonar.java.binaries=$(System.DefaultWorkingDirectory)/target/classes
         sonar.coverage.jacoco.xmlReportPaths=$(System.DefaultWorkingDirectory)/target/site/jacoco/jacoco.xml
 
@@ -64,7 +67,7 @@ steps:
       sonarQubeRunAnalysis: true
       sqMavenPluginVersionChoice: 'latest'
 
-  - task: SonarCloudPublish@1
+  - task: SonarCloudPublish@3
     displayName: Publish Sonar quality gate
     inputs:
       pollingTimeoutSec: '300'

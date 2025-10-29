@@ -54,12 +54,12 @@ curl -X POST http://localhost:8080/api/tasks/{id}/status \
 - Pipeline stages:
   - Checkout and cache Maven dependencies.
   - Provision JDK 21 on the hosted agent.
-  - Prepare SonarCloud analysis (service connection + organization/project placeholders must be updated in the YAML).
-  - `Maven@4` task runs `verify`, which executes tests, JaCoCo coverage, Checkstyle, and SpotBugs.
-  - SonarCloud analysis/publish tasks upload metrics and enforce the quality gate.
+  - SonarCloud prepare task (v2) injects credentials, project/organization identifiers, and coverage paths.
+  - `Maven@4` runs `verify`, executes unit tests, JaCoCo coverage, Checkstyle, SpotBugs, and triggers Sonar analysis inline.
+  - SonarCloud publish task (v3) waits for the quality gate; build fails if it’s not green.
   - Publish JUnit test results, JaCoCo coverage, and SpotBugs XML as artifacts.
 - Build fails if compilation, tests, Sonar quality gate, static analysis, or coverage checks trip—providing a hard gate before merging.
-- One-time setup: install the SonarCloud Azure DevOps extension, create a SonarCloud project, generate a service connection named in the YAML, and replace the `YOUR_SONARCLOUD_ORG` / `YOUR_SONARCLOUD_PROJECT_KEY` placeholders before running the pipeline.
+- One-time setup: install/update the SonarCloud Azure DevOps extension, create a SonarCloud project, generate a service connection named in the YAML, and replace the organization/project values before running the pipeline.
 
 ## Branch Policies and Protection
 - Default branch is `main`; active development occurs on `development`.
