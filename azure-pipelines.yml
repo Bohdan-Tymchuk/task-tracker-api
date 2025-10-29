@@ -35,29 +35,12 @@ steps:
       jdkArchitectureOption: 'x64'
       jdkSourceOption: 'PreInstalled'
 
-  - task: SonarCloudPrepare@2
-    displayName: Prepare SonarCloud analysis
-    inputs:
-      SonarCloud: 'SonarCloudServiceConnection'
-      organization: 'X00229514'
-      scannerMode: 'Other'
-      configMode: 'manual'
-      projectKey: 'X00229514_task-tracker-api'
-      projectName: 'Task Tracker API'
-      extraProperties: |
-        sonar.coverage.jacoco.xmlReportPaths=$(System.DefaultWorkingDirectory)/target/site/jacoco/jacoco.xml
-
   - task: Maven@4
     displayName: Build, test, coverage, static analysis
     inputs:
       mavenPomFile: 'pom.xml'
       goals: 'verify'
-      options: >
-        -Dmaven.repo.local=$(Pipeline.Workspace)/.m2/repository
-        -Dsonar.projectKey=X00229514_task-tracker-api
-        -Dsonar.organization=x00229514
-        -Dsonar.projectName="Task Tracker API"
-        -Dsonar.qualitygate.wait=true
+      options: '-Dmaven.repo.local=$(Pipeline.Workspace)/.m2/repository'
       publishJUnitResults: true
       testResultsFiles: '**/surefire-reports/*.xml'
       codeCoverageToolOption: 'JaCoCo'
@@ -65,8 +48,7 @@ steps:
       codeCoverageSourceDirectories: '$(System.DefaultWorkingDirectory)/src/main/java'
       codeCoverageFailIfEmpty: true
       mavenOptions: '-Xmx1024m'
-      sonarQubeRunAnalysis: true
-      sqMavenPluginVersionChoice: 'latest'
+      sonarQubeRunAnalysis: false
 
   - task: PublishCodeCoverageResults@2
     inputs:
@@ -75,6 +57,38 @@ steps:
       reportDirectory: '$(System.DefaultWorkingDirectory)/**/site/jacoco'
       failIfCoverageEmpty: true
     condition: succeededOrFailed()
+
+  - task: SonarCloudPrepare@2
+    displayName: Prepare SonarCloud analysis
+    condition: ne(variables['Build.Reason'], 'PullRequest')
+    inputs:
+      SonarCloud: 'SonarCloudServiceConnection'
+      organization: 'x00229514'
+      scannerMode: 'Other'
+      configMode: 'manual'
+      projectKey: 'X00229514_task-tracker-api'
+      projectName: 'Task Tracker API'
+      extraProperties: |
+        sonar.coverage.jacoco.xmlReportPaths=$(System.DefaultWorkingDirectory)/target/site/jacoco/jacoco.xml
+
+  - task: Maven@4
+    displayName: Run SonarCloud analysis
+    condition: ne(variables['Build.Reason'], 'PullRequest')
+    inputs:
+      mavenPomFile: 'pom.xml'
+      goals: 'sonar:sonar'
+      options: >
+        -Dmaven.repo.local=$(Pipeline.Workspace)/.m2/repository
+        -DskipTests
+        -Dsonar.projectKey=X00229514_task-tracker-api
+        -Dsonar.organization=x00229514
+        -Dsonar.projectName="Task Tracker API"
+        -Dsonar.qualitygate.wait=true
+        -Dsonar.coverage.jacoco.xmlReportPaths=$(System.DefaultWorkingDirectory)/target/site/jacoco/jacoco.xml
+      publishJUnitResults: false
+      codeCoverageToolOption: 'None'
+      mavenOptions: '-Xmx1024m'
+      sonarQubeRunAnalysis: false
 
   - task: PublishBuildArtifacts@1
     displayName: Publish SpotBugs report
