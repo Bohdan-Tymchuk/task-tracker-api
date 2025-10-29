@@ -57,6 +57,7 @@ steps:
         -Dsonar.projectKey=X00229514_task-tracker-api
         -Dsonar.organization=x00229514
         -Dsonar.projectName="Task Tracker API"
+        -Dsonar.qualitygate.wait=true
       publishJUnitResults: true
       testResultsFiles: '**/surefire-reports/*.xml'
       codeCoverageToolOption: 'JaCoCo'
@@ -66,11 +67,6 @@ steps:
       mavenOptions: '-Xmx1024m'
       sonarQubeRunAnalysis: true
       sqMavenPluginVersionChoice: 'latest'
-
-  - task: SonarCloudPublish@3
-    displayName: Publish Sonar quality gate
-    inputs:
-      pollingTimeoutSec: '300'
 
   - task: PublishCodeCoverageResults@2
     inputs:
