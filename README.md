@@ -53,11 +53,12 @@ curl -X POST http://localhost:8080/api/tasks/{id}/status \
 - Azure Pipelines YAML (`azure-pipelines.yml`) triggers on pushes and PRs targeting `main` and `development`.
 - Pipeline stages:
   - Checkout and cache Maven dependencies.
-  - Provision JDK 21 via `UseJavaVersion@1`.
-  - `mvn -B verify` runs compilation, tests, Checkstyle, SpotBugs, and JaCoCo coverage checks.
-  - Publish JUnit test results and the JaCoCo coverage report.
-  - Upload SpotBugs XML as a build artifact for inspection.
-- Build fails if compilation, static analysis, or coverage checks trip—providing a hard gate before merging.
+  - Provision JDK 21 on the hosted agent.
+  - `Maven@4` runs `verify`, executes unit tests, JaCoCo coverage, Checkstyle, and SpotBugs.
+  - Publish JUnit test results, JaCoCo coverage, and SpotBugs XML as artifacts.
+  - SonarCloud prepare (v2) + dedicated `Maven@4` `sonar:sonar` run (non-PR builds) reuse the coverage report and enforce the quality gate.
+- Build fails if compilation, tests, Sonar quality gate, static analysis, or coverage checks trip—providing a hard gate before merging.
+- One-time setup: install/update the SonarCloud Azure DevOps extension, create a SonarCloud project, generate a service connection named in the YAML, and replace the organization/project values before running the pipeline.
 
 ## Branch Policies and Protection
 - Default branch is `main`; active development occurs on `development`.
