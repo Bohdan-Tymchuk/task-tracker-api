@@ -48,8 +48,6 @@ steps:
         sonar.projectKey=X00229514_task-tracker-api
         sonar.projectName=Task Tracker API
         sonar.organization=X00229514
-        sonar.java.binaries=$(System.DefaultWorkingDirectory)/target/classes
-        sonar.coverage.jacoco.xmlReportPaths=$(System.DefaultWorkingDirectory)/target/site/jacoco/jacoco.xml
 
   - task: Maven@4
     displayName: Build, test, coverage, static analysis
