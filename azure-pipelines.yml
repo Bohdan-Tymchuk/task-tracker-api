@@ -1,19 +1,60 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
 trigger:
-- main
+  branches:
+    include:
+      - main
+      - development
+
+pr:
+  branches:
+    include:
+      - main
+      - development
 
 pool:
   vmImage: ubuntu-latest
 
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+variables:
+  MAVEN_OPTS: -Dmaven.repo.local=$(Pipeline.Workspace)/.m2/repository
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+steps:
+  - checkout: self
+    fetchDepth: 0
+
+  - task: Cache@2
+    displayName: Cache Maven local repo
+    inputs:
+      key: maven | "$(Agent.OS)" | pom.xml
+      path: $(Pipeline.Workspace)/.m2/repository
+
+  - task: JavaToolInstaller@0
+    displayName: Use JDK 21
+    inputs:
+      versionSpec: '21'
+      jdkArchitectureOption: 'x64'
+      jdkSourceOption: 'PreInstalled'
+
+  - script: mvn -B verify
+    displayName: Build, test, coverage, static analysis
+
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFormat: 'JUnit'
+      testResultsFiles: '**/surefire-reports/*.xml'
+      failTaskOnFailedTests: true
+    condition: succeededOrFailed()
+
+  - task: PublishCodeCoverageResults@2
+    inputs:
+      codeCoverageTool: 'JaCoCo'
+      summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/jacoco.xml'
+      reportDirectory: '$(System.DefaultWorkingDirectory)/**/site/jacoco'
+      failIfCoverageEmpty: true
+    condition: succeededOrFailed()
+
+  - task: PublishBuildArtifacts@1
+    displayName: Publish SpotBugs report
+    inputs:
+      PathtoPublish: '$(System.DefaultWorkingDirectory)/target/spotbugsXml.xml'
+      ArtifactName: 'spotbugs-report'
+      publishLocation: 'Container'
+    condition: succeededOrFailed()
