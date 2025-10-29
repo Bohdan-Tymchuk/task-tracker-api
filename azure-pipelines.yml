@@ -37,10 +37,10 @@ steps:
     displayName: Prepare SonarCloud analysis
     inputs:
       SonarCloud: 'SonarCloudServiceConnection'
-      organization: 'YOUR_SONARCLOUD_ORG'
+      organization: 'X00229514'
       scannerMode: 'Other'
       configMode: 'manual'
-      projectKey: 'YOUR_SONARCLOUD_PROJECT_KEY'
+      projectKey: 'X00229514_task-tracker-api'
       projectName: 'Task Tracker API'
       extraProperties: |
         sonar.java.binaries=$(System.DefaultWorkingDirectory)/target/classes
