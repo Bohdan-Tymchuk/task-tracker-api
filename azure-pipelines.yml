@@ -26,10 +26,12 @@ steps:
       key: maven | "$(Agent.OS)" | pom.xml
       path: $(Pipeline.Workspace)/.m2/repository
 
-  - task: UseJavaVersion@1
+  - task: JavaToolInstaller@0
+    displayName: Use JDK 21
     inputs:
       versionSpec: '21'
-      architecture: 'x64'
+      jdkArchitectureOption: 'x64'
+      jdkSourceOption: 'PreInstalled'
 
   - script: mvn -B verify
     displayName: Build, test, coverage, static analysis
