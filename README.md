@@ -19,6 +19,30 @@ Task Tracker API is a Spring Boot service that lets teams capture work items, up
    The command compiles the app, runs all unit tests, executes Checkstyle and SpotBugs, and enforces ≥ 80 % line coverage via JaCoCo.
 5. Run locally (optional): `mvn spring-boot:run` and hit `http://localhost:8080/api/tasks`.
 
+### Quick Usage Example
+Create a task:
+```bash
+curl -X POST http://localhost:8080/api/tasks \
+  -H "Content-Type: application/json" \
+  -d '{
+        "title": "Draft documentation",
+        "description": "Outline the CI pipeline steps",
+        "dueDate": "2024-11-15"
+      }'
+```
+
+Fetch only pending tasks:
+```bash
+curl "http://localhost:8080/api/tasks?status=PENDING"
+```
+
+Mark a task complete (replace `{id}` with the response UUID):
+```bash
+curl -X POST http://localhost:8080/api/tasks/{id}/status \
+  -H "Content-Type: application/json" \
+  -d '{"status": "COMPLETED"}'
+```
+
 ## Application Features
 - **Create tasks** with title, description, and due date; tasks start in `PENDING`.
 - **Query tasks** using optional filters for status or due date to highlight upcoming work.
