@@ -1,0 +1,3 @@
+/home/boha/codex-playground/task-tracker-api/src/test/java/com/example/tasktracker/controller/TaskControllerTest.java
+/home/boha/codex-playground/task-tracker-api/src/test/java/com/example/tasktracker/repository/InMemoryTaskRepositoryTest.java
+/home/boha/codex-playground/task-tracker-api/src/test/java/com/example/tasktracker/service/TaskServiceTest.java

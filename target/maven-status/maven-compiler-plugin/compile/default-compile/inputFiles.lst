@@ -1,0 +1,12 @@
+/home/boha/codex-playground/task-tracker-api/src/main/java/com/example/tasktracker/TaskTrackerApiApplication.java
+/home/boha/codex-playground/task-tracker-api/src/main/java/com/example/tasktracker/controller/RestExceptionHandler.java
+/home/boha/codex-playground/task-tracker-api/src/main/java/com/example/tasktracker/controller/TaskController.java
+/home/boha/codex-playground/task-tracker-api/src/main/java/com/example/tasktracker/dto/TaskRequest.java
+/home/boha/codex-playground/task-tracker-api/src/main/java/com/example/tasktracker/dto/TaskResponse.java
+/home/boha/codex-playground/task-tracker-api/src/main/java/com/example/tasktracker/dto/UpdateStatusRequest.java
+/home/boha/codex-playground/task-tracker-api/src/main/java/com/example/tasktracker/model/Task.java
+/home/boha/codex-playground/task-tracker-api/src/main/java/com/example/tasktracker/model/TaskStatus.java
+/home/boha/codex-playground/task-tracker-api/src/main/java/com/example/tasktracker/repository/InMemoryTaskRepository.java
+/home/boha/codex-playground/task-tracker-api/src/main/java/com/example/tasktracker/repository/TaskRepository.java
+/home/boha/codex-playground/task-tracker-api/src/main/java/com/example/tasktracker/service/TaskService.java
+/home/boha/codex-playground/task-tracker-api/src/main/java/com/example/tasktracker/service/TaskServiceException.java

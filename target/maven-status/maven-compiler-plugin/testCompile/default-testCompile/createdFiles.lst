@@ -1,0 +1,3 @@
+com/example/tasktracker/repository/InMemoryTaskRepositoryTest.class
+com/example/tasktracker/controller/TaskControllerTest.class
+com/example/tasktracker/service/TaskServiceTest.class
