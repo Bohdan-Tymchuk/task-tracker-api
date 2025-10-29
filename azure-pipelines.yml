@@ -59,9 +59,8 @@ steps:
       codeCoverageSourceDirectories: '$(System.DefaultWorkingDirectory)/src/main/java'
       codeCoverageFailIfEmpty: true
       mavenOptions: '-Xmx1024m'
-
-  - task: SonarCloudAnalyze@1
-    displayName: Run SonarCloud analysis
+      sonarQubeRunAnalysis: true
+      sqMavenPluginVersionChoice: 'latest'
 
   - task: SonarCloudPublish@1
     displayName: Publish Sonar quality gate
