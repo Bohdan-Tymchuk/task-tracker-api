@@ -33,15 +33,40 @@ steps:
       jdkArchitectureOption: 'x64'
       jdkSourceOption: 'PreInstalled'
 
-  - script: mvn -B verify
-    displayName: Build, test, coverage, static analysis
-
-  - task: PublishTestResults@2
+  - task: SonarCloudPrepare@1
+    displayName: Prepare SonarCloud analysis
     inputs:
-      testResultsFormat: 'JUnit'
+      SonarCloud: 'SonarCloudServiceConnection'
+      organization: 'YOUR_SONARCLOUD_ORG'
+      scannerMode: 'Other'
+      configMode: 'manual'
+      projectKey: 'YOUR_SONARCLOUD_PROJECT_KEY'
+      projectName: 'Task Tracker API'
+      extraProperties: |
+        sonar.java.binaries=$(System.DefaultWorkingDirectory)/target/classes
+        sonar.coverage.jacoco.xmlReportPaths=$(System.DefaultWorkingDirectory)/target/site/jacoco/jacoco.xml
+
+  - task: Maven@4
+    displayName: Build, test, coverage, static analysis
+    inputs:
+      mavenPomFile: 'pom.xml'
+      goals: 'verify'
+      options: '-Dmaven.repo.local=$(Pipeline.Workspace)/.m2/repository'
+      publishJUnitResults: true
       testResultsFiles: '**/surefire-reports/*.xml'
-      failTaskOnFailedTests: true
-    condition: succeededOrFailed()
+      codeCoverageToolOption: 'JaCoCo'
+      codeCoverageClassFilesDirectories: '$(System.DefaultWorkingDirectory)/target/classes'
+      codeCoverageSourceDirectories: '$(System.DefaultWorkingDirectory)/src/main/java'
+      codeCoverageFailIfEmpty: true
+      mavenOptions: '-Xmx1024m'
+
+  - task: SonarCloudAnalyze@1
+    displayName: Run SonarCloud analysis
+
+  - task: SonarCloudPublish@1
+    displayName: Publish Sonar quality gate
+    inputs:
+      pollingTimeoutSec: '300'
 
   - task: PublishCodeCoverageResults@2
     inputs:
