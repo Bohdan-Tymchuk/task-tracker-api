@@ -45,16 +45,18 @@ steps:
       projectKey: 'X00229514_task-tracker-api'
       projectName: 'Task Tracker API'
       extraProperties: |
-        sonar.projectKey=X00229514_task-tracker-api
-        sonar.projectName=Task Tracker API
-        sonar.organization=X00229514
+        sonar.coverage.jacoco.xmlReportPaths=$(System.DefaultWorkingDirectory)/target/site/jacoco/jacoco.xml
 
   - task: Maven@4
     displayName: Build, test, coverage, static analysis
     inputs:
       mavenPomFile: 'pom.xml'
       goals: 'verify'
-      options: '-Dmaven.repo.local=$(Pipeline.Workspace)/.m2/repository'
+      options: >
+        -Dmaven.repo.local=$(Pipeline.Workspace)/.m2/repository
+        -Dsonar.projectKey=X00229514_task-tracker-api
+        -Dsonar.organization=x00229514
+        -Dsonar.projectName="Task Tracker API"
       publishJUnitResults: true
       testResultsFiles: '**/surefire-reports/*.xml'
       codeCoverageToolOption: 'JaCoCo'
