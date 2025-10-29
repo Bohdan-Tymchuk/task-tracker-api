@@ -5,6 +5,7 @@ target/
 # Local Maven repository cache if created inside the repo
 .m2/
 
+
 # IDE metadata
 .idea/
 *.iml
