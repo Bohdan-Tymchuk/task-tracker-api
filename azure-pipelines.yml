@@ -47,7 +47,7 @@ steps:
       jdkArchitectureOption: 'x64'
       jdkSourceOption: 'PreInstalled'
 
-  - script: mvn -B verify sonar:sonar
+  - script: mvn -B verify sonar:sonar -Dsonar.projectKey=X00229514_task-tracker-api -Dsonar.organization=x00229514 -Dsonar.host.url=https://sonarcloud.io
     displayName: Build, test, coverage, static analysis
 
   - task: PublishTestResults@2
