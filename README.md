@@ -27,7 +27,7 @@ curl -X POST http://localhost:8080/api/tasks \
   -d '{
         "title": "Draft documentation",
         "description": "Outline the CI pipeline steps",
-        "dueDate": "2024-11-15"
+        "dueDate": "2025-11-15"
       }'
 ```
 
