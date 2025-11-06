@@ -24,6 +24,9 @@
         <checkstyle.version>10.18.1</checkstyle.version>
         <spotbugs.version>4.8.5.0</spotbugs.version>
         <jacoco.version>0.8.12</jacoco.version>
+        <sonar.projectKey>X00229514_task-tracker-api</sonar.projectKey>
+        <sonar.organization>x00229514</sonar.organization>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
     </properties>
 
     <dependencies>
