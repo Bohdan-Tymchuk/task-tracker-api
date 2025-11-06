@@ -20,6 +20,17 @@ steps:
   - checkout: self
     fetchDepth: 0
 
+  - task: SonarCloudPrepare@3
+    displayName: Prepare SonarCloud analysis
+    inputs:
+      SonarCloud: 'SonarCloudServiceConnection'
+      organization: 'x00229514'
+      scannerMode: 'Other'
+      configMode: 'manual'
+      extraProperties: |
+        sonar.java.binaries=$(System.DefaultWorkingDirectory)/target/classes
+        sonar.coverage.jacoco.xmlReportPaths=$(System.DefaultWorkingDirectory)/target/site/jacoco/jacoco.xml
+
   - task: Cache@2
     displayName: Cache Maven local repo
     inputs:
@@ -33,7 +44,7 @@ steps:
       jdkArchitectureOption: 'x64'
       jdkSourceOption: 'PreInstalled'
 
-  - script: mvn -B verify
+  - script: mvn -B verify sonar:sonar
     displayName: Build, test, coverage, static analysis
 
   - task: PublishTestResults@2
@@ -49,6 +60,12 @@ steps:
       summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/jacoco.xml'
       reportDirectory: '$(System.DefaultWorkingDirectory)/**/site/jacoco'
       failIfCoverageEmpty: true
+    condition: succeededOrFailed()
+
+  - task: SonarCloudPublish@3
+    displayName: Publish SonarCloud quality gate
+    inputs:
+      pollingTimeoutSec: '300'
     condition: succeededOrFailed()
 
   - task: PublishBuildArtifacts@1
