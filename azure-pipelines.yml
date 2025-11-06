@@ -27,9 +27,10 @@ steps:
       organization: 'x00229514'
       scannerMode: 'Other'
       configMode: 'manual'
-      cliProjectKey: 'X00229514_task-tracker-api'
-      cliProjectName: 'task-tracker-api'
       extraProperties: |
+        sonar.host.url=https://sonarcloud.io
+        sonar.organization=x00229514
+        sonar.projectKey=X00229514_task-tracker-api
         sonar.java.binaries=$(System.DefaultWorkingDirectory)/target/classes
         sonar.coverage.jacoco.xmlReportPaths=$(System.DefaultWorkingDirectory)/target/site/jacoco/jacoco.xml
 
