@@ -22,6 +22,7 @@ steps:
 
   - task: SonarCloudPrepare@3
     displayName: Prepare SonarCloud analysis
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
     inputs:
       SonarCloud: 'SonarCloudServiceConnection'
       organization: 'x00229514'
@@ -44,8 +45,17 @@ steps:
       jdkArchitectureOption: 'x64'
       jdkSourceOption: 'PreInstalled'
 
-  - script: mvn -B verify sonar:sonar
-    displayName: Build, test, coverage, static analysis
+  - script: |
+      echo "Running full build with SonarCloud analysis on branch $(Build.SourceBranch)"
+      mvn -B verify sonar:sonar
+    displayName: Build, test, coverage, static analysis (main)
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
+
+  - script: |
+      echo "SonarCloud analysis runs only on main; skipping for branch $(Build.SourceBranch)"
+      mvn -B verify
+    displayName: Build, test, coverage, static analysis (non-main)
+    condition: ne(variables['Build.SourceBranch'], 'refs/heads/main')
 
   - task: PublishTestResults@2
     inputs:
@@ -66,7 +76,7 @@ steps:
     displayName: Publish SonarCloud quality gate
     inputs:
       pollingTimeoutSec: '300'
-    condition: succeededOrFailed()
+    condition: and(succeededOrFailed(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
 
   - task: PublishBuildArtifacts@1
     displayName: Publish SpotBugs report
