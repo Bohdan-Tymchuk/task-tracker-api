@@ -59,6 +59,11 @@ curl -X POST http://localhost:8080/api/tasks/{id}/status \
   - Upload SpotBugs XML as a build artifact for inspection.
 - Build fails if compilation, static analysis, or coverage checks trip—providing a hard gate before merging.
 
+ ![Azure Pipelines test summary](assets/test_pass.png)
+
+![Azure Pipelines code coverage](assets/code_coverage.png)
+
+
 ## Branch Policies and Protection
 - Default branch is `main`; active development occurs on `development`.
 - GitHub branch rules:
