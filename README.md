@@ -59,7 +59,7 @@ curl -X POST http://localhost:8080/api/tasks/{id}/status \
   - Upload SpotBugs XML as a build artifact for inspection.
 - Build fails if compilation, static analysis, or coverage checks trip—providing a hard gate before merging.
 
- ![Azure Pipelines test summary](assets/test_pass.png)
+![Azure Pipelines test summary](assets/test_pass.png)
 
 ![Azure Pipelines code coverage](assets/code_coverage.png)
 
@@ -71,6 +71,8 @@ curl -X POST http://localhost:8080/api/tasks/{id}/status \
   - Enforce the Azure Pipeline status check and require branches to be up to date.
   - Block force pushes and direct merges to protected branches.
 - Workflows: feature branches cut from `development`, PRs reviewed and merged into `development`, then promotion PRs from `development` to `main`.
+
+![Branch Protection rules](assets/github-branch-protection.png)
 
 ## Testing Strategy
 - Unit tests exercise service logic (task creation, filtering, state updates) using the in-memory repository.
