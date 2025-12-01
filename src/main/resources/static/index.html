@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task Tracker</title>
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <div class="page">
+    <div class="header">
+      <h1>Task Tracker</h1>
+      <div class="status-line" id="statusLine"></div>
+    </div>
+
+    <div class="layout">
+      <div class="card narrow">
+        <h2>Create Task</h2>
+        <form id="createForm">
+          <div class="field">
+            <label for="title">Title</label>
+            <input id="title" name="title" placeholder="Draft documentation" />
+            <div class="hint" data-error-for="title"></div>
+          </div>
+          <div class="field">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" placeholder="Outline the CI/CD steps" rows="3"></textarea>
+            <div class="hint" data-error-for="description"></div>
+          </div>
+          <div class="field">
+            <label for="dueDate">Due Date</label>
+            <input id="dueDate" name="dueDate" type="date" />
+            <div class="hint" data-error-for="dueDate"></div>
+          </div>
+          <button type="submit">Create Task</button>
+        </form>
+      </div>
+
+      <div class="card full">
+        <div class="table-head">
+          <div class="title-group">
+            <h2>Tasks</h2>
+            <div class="hint" id="feedback"></div>
+          </div>
+          <details class="filters-toggle">
+            <summary>Filters</summary>
+            <form id="filterForm" class="filters">
+              <div class="field">
+                <label for="filterStatus">Status</label>
+                <select id="filterStatus" name="status">
+                  <option value="">Any</option>
+                  <option value="PENDING">Pending</option>
+                  <option value="IN_PROGRESS">In Progress</option>
+                  <option value="COMPLETED">Completed</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="dueBefore">Due on or before</label>
+                <input id="dueBefore" name="dueBefore" type="date" />
+              </div>
+              <div class="actions-row">
+                <button type="submit" class="ghost">Apply</button>
+                <button type="button" id="resetFilters" class="ghost">Reset</button>
+              </div>
+            </form>
+          </details>
+        </div>
+        <div class="table-wrap" id="tableWrap">
+          <table id="tasksTable">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Due</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
