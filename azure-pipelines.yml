@@ -226,7 +226,7 @@ stages:
   - stage: DeployProd
     displayName: Deploy to prod (approval gated)
     dependsOn: UAT
-    condition: succeeded()
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
     jobs:
       - deployment: toProd
         displayName: Deploy to prod web app
