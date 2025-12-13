@@ -146,7 +146,7 @@ stages:
                     azureSubscription: '$(serviceConnection)'
                     appName: '$(testApp)'
                     appType: webAppLinux
-                    package: '$(Pipeline.Workspace)/artifacts/$(artifactName)/*.jar'
+                    package: '$(Pipeline.Workspace)/artifacts/**/*.jar'
                     runtimeStack: 'JAVA|21-java21'
 
   - stage: Perf
@@ -231,5 +231,5 @@ stages:
                     azureSubscription: '$(serviceConnection)'
                     appName: '$(prodApp)'
                     appType: webAppLinux
-                    package: '$(Pipeline.Workspace)/artifacts/$(artifactName)/*.jar'
+                    package: '$(Pipeline.Workspace)/artifacts/**/*.jar'
                     runtimeStack: 'JAVA|21-java21'
