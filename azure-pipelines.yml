@@ -162,7 +162,7 @@ stages:
           - script: |
               mkdir -p $(System.DefaultWorkingDirectory)/reports
               SUMMARY_PATH=/work/reports/k6-summary.json
-              docker run --rm \
+              docker run --rm --user 0 \
                 -v $(System.DefaultWorkingDirectory):/work \
                 -w /work \
                 -e API_BASE=$(testBaseUrl) \
