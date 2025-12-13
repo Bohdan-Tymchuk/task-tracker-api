@@ -205,7 +205,7 @@ stages:
               jdkArchitectureOption: 'x64'
               jdkSourceOption: 'PreInstalled'
           - script: |
-              mvn -B -Dmaven.repo.local=$(mavenCache) -Dselenium.baseUrl=$(testBaseUrl) -Dspring.profiles.active=test test -Dtest=**/ui/**Test
+              mvn -B -Dmaven.repo.local=$(mavenCache) -Dspring.profiles.active=test test -Dtest=**/ui/**Test
             displayName: Run Selenium UI tests (headless)
           - task: PublishTestResults@2
             inputs:
