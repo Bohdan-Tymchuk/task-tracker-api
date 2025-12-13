@@ -14,8 +14,11 @@ Task Tracker API is a Spring Boot service for creating, updating, and filtering 
 
 ## Local Development Setup
 1. Install Java 21 and Maven 3.9+.
-2. `mvn -B verify` — compiles, runs tests, Checkstyle/SpotBugs, and JaCoCo coverage.
-3. Run locally: `mvn spring-boot:run` → `http://localhost:8080`.
+2. Fast cycle (skips UI): `mvn -B -Dtest='!**/ui/**Test' verify` — compiles, runs unit/integration tests, Checkstyle/SpotBugs, and JaCoCo.
+3. Full UI/UAT (requires Playwright deps installed once):  
+   - Install deps: `mvn -Dexec.classpathScope=test exec:java -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install-deps chromium"`  
+   - Run: `mvn -B -Dspring.profiles.active=test clean test -Dtest=*Playwright*`
+4. Run the app locally: `mvn spring-boot:run` → `http://localhost:8080`.
 
 Quick API usage:
 ```bash
