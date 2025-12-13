@@ -16,7 +16,7 @@ variables:
   serviceConnection: sc-tasktracker-api
   testApp: tasktracker-api-test
   prodApp: tasktracker-api
-  testBaseUrl: https://tasktracker-api-test.switzerlandnorth-01.azurewebsites.net
+  testBaseUrl: https://tasktracker-api-test-gwhueuakbzhmejaw.switzerlandnorth-01.azurewebsites.net
 
 stages:
   - stage: BuildAndTest
@@ -160,7 +160,8 @@ stages:
         steps:
           - checkout: self
           - script: |
-              SUMMARY_PATH=$(System.DefaultWorkingDirectory)/k6-summary.json
+              mkdir -p $(System.DefaultWorkingDirectory)/reports
+              SUMMARY_PATH=$(System.DefaultWorkingDirectory)/reports/k6-summary.json
               docker run --rm \
                 -v $(System.DefaultWorkingDirectory):/work \
                 -w /work \
@@ -174,7 +175,7 @@ stages:
             displayName: k6 smoke against test
           - task: PublishPipelineArtifact@1
             inputs:
-              targetPath: '$(System.DefaultWorkingDirectory)/k6-summary.json'
+              targetPath: '$(System.DefaultWorkingDirectory)/reports/k6-summary.json'
               artifact: k6-summary
             condition: always()
             displayName: Publish k6 summary
