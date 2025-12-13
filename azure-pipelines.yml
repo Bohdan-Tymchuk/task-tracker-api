@@ -160,16 +160,21 @@ stages:
         steps:
           - checkout: self
           - script: |
+              SUMMARY_PATH=$(System.DefaultWorkingDirectory)/k6-summary.json
               docker run --rm \
                 -v $(System.DefaultWorkingDirectory):/work \
                 -w /work \
                 -e API_BASE=$(testBaseUrl) \
-                -e SUMMARY=/work/k6-summary.json \
+                -e SUMMARY=$SUMMARY_PATH \
                 grafana/k6:latest run perf/smoke.js
+              if [ ! -f "$SUMMARY_PATH" ]; then
+                echo "k6 summary not found at $SUMMARY_PATH"
+                exit 1
+              fi
             displayName: k6 smoke against test
           - task: PublishPipelineArtifact@1
             inputs:
-              targetPath: 'k6-summary.json'
+              targetPath: '$(System.DefaultWorkingDirectory)/k6-summary.json'
               artifact: k6-summary
             condition: always()
             displayName: Publish k6 summary
