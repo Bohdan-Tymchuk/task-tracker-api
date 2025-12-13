@@ -2,11 +2,21 @@ trigger:
   branches:
     include:
       - main
+  paths:
+    exclude:
+      - README.md
+      - docs/**
+      - assets/**
 
 pr:
   branches:
     include:
       - main
+  paths:
+    exclude:
+      - README.md
+      - docs/**
+      - assets/**
 
 variables:
   javaVersion: '21'
