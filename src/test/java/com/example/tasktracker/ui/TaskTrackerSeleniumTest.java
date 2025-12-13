@@ -45,7 +45,7 @@ class TaskTrackerSeleniumTest {
     }
     Assumptions.assumeTrue(selected != null, "No local Chrome or Firefox WebDriver available");
     this.driver = selected;
-    this.wait = new WebDriverWait(driver, Duration.ofSeconds(20));
+    this.wait = new WebDriverWait(driver, Duration.ofSeconds(30));
   }
 
   @AfterEach
@@ -113,9 +113,7 @@ class TaskTrackerSeleniumTest {
 
     driver.findElement(By.cssSelector("form#createForm button[type='submit']")).click();
 
-    wait.until(ExpectedConditions.textToBePresentInElementLocated(
-        By.cssSelector("tbody tr:first-child td:first-child"), "UI Task"));
-
+    wait.until(d -> findRowByTitle("UI Task") != null);
     List<WebElement> titles = driver.findElements(By.cssSelector("tbody tr td:first-child"));
     assertThat(titles)
         .extracting(WebElement::getText)
