@@ -13,7 +13,7 @@ variables:
   mavenCache: $(Pipeline.Workspace)/.m2/repository
   artifactStaging: $(Build.ArtifactStagingDirectory)
   artifactName: drop
-  serviceConnection: uami-tasktracker
+  serviceConnection: sc-tasktracker-api
   testApp: tasktracker-api-test-gwhueuakbzhmejaw
   prodApp: tasktracker-api-e5akhdazhkemdngk
   testBaseUrl: https://tasktracker-api-test-gwhueuakbzhmejaw.switzerlandnorth-01.azurewebsites.net
