@@ -1,87 +1,127 @@
 # Task Tracker API
 
 ## Overview
-Task Tracker API is a Spring Boot service that lets teams capture work items, update their state, and query upcoming work. The codebase is intentionally small so the focus stays on continuous integration: automated builds, static analysis, and coverage enforcement.
+Task Tracker API is a Spring Boot service for creating, updating, and filtering tasks. The project is optimized for demonstrating CI/CD practices (build automation, quality gates, security/perf tests) rather than feature complexity.
 
 ## Technologies Used
-- Java 21
-- Spring Boot 3 (Web, Validation)
-- Maven build tooling
-- JUnit 5, AssertJ, Spring MockMvc
-- JaCoCo, Checkstyle, SpotBugs for quality gates
-- Azure Pipelines for CI/CD orchestration
+- Java 21, Spring Boot 3.4.x (Web, Validation)
+- Maven, JUnit 5, AssertJ, Spring MockMvc
+- JaCoCo, Checkstyle, SpotBugs
+- Playwright (Java) for UI/UAT
+- k6 for performance smoke (Grafana/k6 Cloud)
+- Snyk for SCA
+- Azure Pipelines for CI/CD to Azure App Service (test/prod)
 
 ## Local Development Setup
-1. Install Java 21 (matching the CI environment).
-2. Ensure Apache Maven 3.9+ is available on your `$PATH`.
-3. Clone the repository and switch to the `development` branch.
-4. Build and test: `mvn -B verify`  
-   The command compiles the app, runs all unit tests, executes Checkstyle and SpotBugs, and enforces ≥ 80 % line coverage via JaCoCo.
-5. Run locally (optional): `mvn spring-boot:run` and hit `http://localhost:8080/api/tasks`.
+1. Install Java 21 and Maven 3.9+.
+2. Fast cycle (skips UI): `mvn -B -Dtest='!**/ui/**Test' verify` — compiles, runs unit/integration tests, Checkstyle/SpotBugs, and JaCoCo.
+3. Full UI/UAT (requires Playwright deps installed once):  
+   - Install deps: `mvn -Dexec.classpathScope=test exec:java -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install-deps chromium"`  
+   - Run: `mvn -B -Dspring.profiles.active=test clean test -Dtest=*Playwright*`
+4. Run the app locally: `mvn spring-boot:run` → `http://localhost:8080`.
 
-### Quick Usage Example
-Create a task:
+Quick API usage:
 ```bash
+# create
 curl -X POST http://localhost:8080/api/tasks \
   -H "Content-Type: application/json" \
-  -d '{
-        "title": "Draft documentation",
-        "description": "Outline the CI pipeline steps",
-        "dueDate": "2025-11-15"
-      }'
-```
-
-Fetch only pending tasks:
-```bash
+  -d '{"title":"Draft docs","description":"Outline CI/CD","dueDate":"2025-11-15"}'
+# filter
 curl "http://localhost:8080/api/tasks?status=PENDING"
-```
-
-Mark a task complete (replace `{id}` with the response UUID):
-```bash
+# update status
 curl -X POST http://localhost:8080/api/tasks/{id}/status \
-  -H "Content-Type: application/json" \
-  -d '{"status": "COMPLETED"}'
+  -H "Content-Type: application/json" -d '{"status":"COMPLETED"}'
 ```
 
 ## Application Features
-- **Create tasks** with title, description, and due date; tasks start in `PENDING`.
-- **Query tasks** using optional filters for status or due date to highlight upcoming work.
-- **Update task status** to reflect progress (`PENDING`, `IN_PROGRESS`, `COMPLETED`).
-- **Delete tasks** once completed or no longer needed.
+- Create tasks with due dates; tasks start as `PENDING`.
+- Filter by status and due-before date.
+- Update status (`PENDING`, `IN_PROGRESS`, `COMPLETED`).
+- Delete tasks when done.
 
 ## CI Pipeline Implementation
-- Azure Pipelines YAML (`azure-pipelines.yml`) triggers on pushes and PRs targeting `main` and `development`.
-- Pipeline stages:
-  - Checkout and cache Maven dependencies.
-  - Provision JDK 21 via `UseJavaVersion@1`.
-  - `mvn -B verify` runs compilation, tests, Checkstyle, SpotBugs, and JaCoCo coverage checks.
-  - Publish JUnit test results and the JaCoCo coverage report.
-  - Upload SpotBugs XML as a build artifact for inspection.
-- Build fails if compilation, static analysis, or coverage checks trip—providing a hard gate before merging.
+- YAML: `azure-pipelines.yml` (triggers on `main`/PRs, excludes docs/assets-only changes).
+- Stages: Build/Test → Snyk → Deploy to test → k6 smoke (cloud) → Playwright UAT → Prod deploy (approval, main-only).
+- Build: `mvn verify -Dtest='!**/ui/**Test'`, Checkstyle/SpotBugs/JaCoCo, SonarCloud on `main`.
+- Artifacts: JAR published and reused for deploy; test/coverage results published.
 
-![Azure Pipelines test summary](assets/test_pass.png)
+Pipeline summary shows the full multi-stage flow (build → security → test deploy → k6 → Playwright → prod):
+![Pipeline summary: multi-stage run with build → security → test deploy → k6 → Playwright → prod](assets/ADA-pipeline-summary-and-stages.png)
 
-![Azure Pipelines code coverage](assets/code_coverage.png)
+Test execution in Azure Pipelines (unit/integration + Playwright UAT):
+![Tests tab showing Playwright UAT and unit test execution in Azure Pipelines](assets/ADA-pipeline-tests-with-playwright-UAT.png)
 
+JaCoCo coverage published in pipeline:
+![Code coverage published from JaCoCo](assets/code_coverage.png)
 
 ## Branch Policies and Protection
-- Default branch is `main`; active development occurs on `development`.
-- GitHub branch rules:
-  - Require pull requests into both branches.
-  - Enforce the Azure Pipeline status check and require branches to be up to date.
-  - Block force pushes and direct merges to protected branches.
-- Workflows: feature branches cut from `development`, PRs reviewed and merged into `development`, then promotion PRs from `development` to `main`.
+- Protected `main`; PRs required with status checks.
+- Azure Pipeline as required check; block force pushes.
+- Suggested flow: feature branches → PR to `main`; prod deploy only from merged `main` with approval.
 
-![Branch Protection rules](assets/github-branch-protection.png)
+GitHub branch protection rules and required status checks:
+![GitHub branch protection rules and required status checks](assets/github-branch-protection.png)
 
 ## Testing Strategy
-- Unit tests exercise service logic (task creation, filtering, state updates) using the in-memory repository.
-- Web layer tests verify JSON contracts and request validation through Spring MockMvc.
-- JaCoCo limit set to 0.80 line coverage; failing tests or insufficient coverage will fail both local and CI builds.
-- Static analyzers (Checkstyle, SpotBugs) run on every build to catch style regressions and potential defects early.
+- Unit/integration: JUnit + MockMvc, JaCoCo ≥80%.
+- Static analysis: Checkstyle, SpotBugs; SonarCloud on `main`.
+- Security: Snyk CLI stage (fails on issues).
+- UI/UAT: Playwright (Java) headless Chromium against embedded app; seeds via API, validates UI flows.
+- Performance: k6 smoke against test environment, `--out cloud` to Grafana/k6 Cloud.
+
+## Environment Setup and Configuration
+- Azure Resource Group + App Service Plan.
+- Web Apps: `tasktracker-api-test` (test), `tasktracker-api` (prod).
+- Service connection: `sc-tasktracker-api` (managed identity).
+- Pipeline variables: app names, `testBaseUrl`, secrets `SNYK_TOKEN`, `K6_CLOUD_TOKEN`.
+
+Azure resources (App Service plan and test/prod Web Apps):
+![Azure resources: App Service plan and test/prod Web Apps](assets/azure-created-services.png)
+
+ADO environments mapped to deployments:
+![ADO environments: test and prod mapped to deployments](assets/ADA-project-environments.png)
+
+## Deployment Process
+- Build artifact once; deploy same JAR to test, then prod.
+- Prod stage gated to `main` and requires approval in ADO `prod` environment.
+- Test URL: `https://tasktracker-api-test-gwhueuakbzhmejaw.switzerlandnorth-01.azurewebsites.net`.
+- Prod URL: `https://tasktracker-api-e5akhdazhkemdngk.switzerlandnorth-01.azurewebsites.net`.
+
+## Security and Performance Testing
+- Snyk stage with `SNYK_TOKEN`; fails on findings.
+- k6 smoke (`perf/smoke.js`) against test; `--out cloud` to Grafana/k6 Cloud.
+
+Snyk dashboard showing project issues and fixes:
+![Snyk dashboard showing project issues and fixes](assets/snyk-main-dashboard-project.png)
+
+Snyk PR check passing in CI:
+![Snyk PR check passing in CI](assets/snyk-pr-check-pass.png)
+
+k6 dashboard in Grafana Cloud:
+![k6 dashboard in Grafana Cloud](assets/k6-dashboard.png)
+
+## UAT Testing (Playwright)
+- Playwright (Java) headless Chromium suite seeds tasks via API, then validates UI create/filter/update flows.
+- Runs after test deploy; publishes JUnit results.
+
+Tests tab with Playwright suite passing (Playwright + unit/integration runs):
+![Tests tab with Playwright suite passing](assets/test_pass.png)
+
+## Pipeline Approval Gates
+- ADO environment `prod` requires manual approval; prod deploy runs only on `main`.
+- Approval email prompts before prod deployment; rejecting keeps prod unchanged.
+
+Approval notification for prod deployment gate:
+![Approval notification for prod deployment gate](assets/email-notification-for-approving-DeoployProd.png)
 
 ## Troubleshooting Guide
-- **Maven cannot download dependencies locally**: set a writable local repo (e.g., `mvn -Dmaven.repo.local=./.m2 verify`) if your environment restricts `~/.m2`.
-- **CI build fails on Checkstyle/SpotBugs**: run `mvn -B verify` to reproduce; fix highlighted issues before pushing.
-- **Coverage gate fails**: review `target/site/jacoco/index.html` locally to spot untested code paths and add unit tests.
-- **Pipeline status check missing in PR**: verify the Azure Pipeline is set as a required status check under GitHub branch protection rules.
+- Maven download issues: `mvn -Dmaven.repo.local=./.m2 verify`.
+- Playwright deps missing: run `mvn -Dexec.classpathScope=test exec:java -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install-deps chromium"` or `npx playwright install-deps chromium`.
+- Pipeline missing? Ensure ADO service connection has rights to the RG/apps.
+- Prod approval on PR? Not anymore: prod stage gated to `main` only.
+
+## Notes and References
+- Grafana k6 Cloud: https://grafana.com/docs/k6/
+- Playwright Java: https://playwright.dev/java/docs/intro
+- Snyk CLI: https://docs.snyk.io
+All external configs/snippets are adapted from vendor docs (see above URLs).
