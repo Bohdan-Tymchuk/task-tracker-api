@@ -45,7 +45,7 @@ class TaskTrackerSeleniumTest {
     }
     Assumptions.assumeTrue(selected != null, "No local Chrome or Firefox WebDriver available");
     this.driver = selected;
-    this.wait = new WebDriverWait(driver, Duration.ofSeconds(30));
+    this.wait = new WebDriverWait(driver, Duration.ofSeconds(15));
   }
 
   @AfterEach
@@ -183,14 +183,10 @@ class TaskTrackerSeleniumTest {
     driver.findElement(By.id("dueDate")).clear();
     driver.findElement(By.id("dueDate")).sendKeys(dueDate.toString());
     driver.findElement(By.cssSelector("form#createForm button[type='submit']")).click();
-    wait.until(d -> {
-      try {
-        return d.findElements(By.cssSelector("tbody tr td:first-child")).stream()
-            .anyMatch(cell -> title.equals(cell.getText()));
-      } catch (StaleElementReferenceException ex) {
-        return false;
-      }
-    });
+    WebDriverWait longWait = new WebDriverWait(driver, Duration.ofSeconds(30));
+    String feedbackText = waitForNonEmptyFeedback(longWait);
+    assertThat(feedbackText).doesNotContainIgnoringCase("fix").doesNotContainIgnoringCase("failed");
+    longWait.until(d -> findRowByTitle(title) != null);
   }
 
   private WebElement findRowByTitle(String title) {
@@ -226,5 +222,19 @@ class TaskTrackerSeleniumTest {
     if (!toggles.isEmpty()) {
       toggles.get(0).click();
     }
+  }
+
+  private void waitForFeedbackContains(String text) {
+    wait.until(ExpectedConditions.textToBePresentInElementLocated(By.id("feedback"), text));
+  }
+
+  private String waitForNonEmptyFeedback() {
+    return waitForNonEmptyFeedback(this.wait);
+  }
+
+  private String waitForNonEmptyFeedback(WebDriverWait waiter) {
+    WebElement feedback = waiter.until(d -> d.findElement(By.id("feedback")));
+    waiter.until(d -> !feedback.getText().isEmpty());
+    return feedback.getText();
   }
 }
