@@ -24,6 +24,7 @@ Icon?
 
 # Logs
 *.log
+reports/
 
 # Spring Boot devtools restart cache
 spring-boot-devtools.properties

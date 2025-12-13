@@ -16,6 +16,7 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.WebDriverException;
+import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
@@ -123,15 +124,12 @@ class TaskTrackerSeleniumTest {
 
     createTask("Update Status Task", "Move to completed", LocalDate.now().plusDays(1));
 
-    WebElement row = findRowByTitle("Update Status Task");
-    Select statusSelect = new Select(row.findElement(By.tagName("select")));
-    statusSelect.selectByValue("COMPLETED");
-
-    wait.until(ExpectedConditions.attributeToBe(
-        By.cssSelector("tbody tr .status-tag"), "data-state", "COMPLETED"));
-
-    WebElement statusTag = driver.findElement(By.cssSelector("tbody tr .status-tag"));
-    assertThat(statusTag.getText()).containsIgnoringCase("completed");
+    updateRowStatus("Update Status Task", TaskStatus.COMPLETED.name());
+    WebElement refreshed = findRowByTitle("Update Status Task");
+    assertThat(refreshed.findElement(By.className("status-tag")).getAttribute("data-state"))
+        .isEqualTo("COMPLETED");
+    assertThat(refreshed.findElement(By.className("status-tag")).getText())
+        .containsIgnoringCase("completed");
   }
 
   @Test
@@ -182,16 +180,27 @@ class TaskTrackerSeleniumTest {
     driver.findElement(By.id("dueDate")).clear();
     driver.findElement(By.id("dueDate")).sendKeys(dueDate.toString());
     driver.findElement(By.cssSelector("form#createForm button[type='submit']")).click();
-    wait.until(d -> d.findElements(By.cssSelector("tbody tr")).stream()
-        .anyMatch(row -> row.findElement(By.cssSelector("td:first-child")).getText().equals(title)));
+    wait.until(d -> {
+      try {
+        return d.findElements(By.cssSelector("tbody tr td:first-child")).stream()
+            .anyMatch(cell -> title.equals(cell.getText()));
+      } catch (StaleElementReferenceException ex) {
+        return false;
+      }
+    });
   }
 
   private WebElement findRowByTitle(String title) {
-    wait.until(d -> !d.findElements(By.cssSelector("tbody tr")).isEmpty());
-    return driver.findElements(By.cssSelector("tbody tr")).stream()
-        .filter(row -> row.findElement(By.cssSelector("td:first-child")).getText().equals(title))
-        .findFirst()
-        .orElseThrow(() -> new IllegalStateException("Row with title not found: " + title));
+    return wait.until(d -> {
+      try {
+        return d.findElements(By.cssSelector("tbody tr")).stream()
+            .filter(row -> title.equals(row.findElement(By.cssSelector("td:first-child")).getText()))
+            .findFirst()
+            .orElse(null);
+      } catch (StaleElementReferenceException ex) {
+        return null;
+      }
+    });
   }
 
   private void updateRowStatus(String title, String statusValue) {
@@ -199,9 +208,13 @@ class TaskTrackerSeleniumTest {
     WebElement row = findRowByTitle(title);
     new Select(row.findElement(By.tagName("select"))).selectByValue(statusValue);
     wait.until(d -> {
-      WebElement refreshed = findRowByTitle(title);
-      return statusValue.equals(refreshed.findElement(By.className("status-tag"))
-          .getAttribute("data-state"));
+      try {
+        WebElement refreshed = findRowByTitle(title);
+        return refreshed != null && statusValue.equals(
+            refreshed.findElement(By.className("status-tag")).getAttribute("data-state"));
+      } catch (StaleElementReferenceException ex) {
+        return false;
+      }
     });
   }
 
