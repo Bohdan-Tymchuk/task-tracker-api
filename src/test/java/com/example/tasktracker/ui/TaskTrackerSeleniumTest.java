@@ -45,7 +45,7 @@ class TaskTrackerSeleniumTest {
     }
     Assumptions.assumeTrue(selected != null, "No local Chrome or Firefox WebDriver available");
     this.driver = selected;
-    this.wait = new WebDriverWait(driver, Duration.ofSeconds(5));
+    this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
   }
 
   @AfterEach
@@ -56,7 +56,7 @@ class TaskTrackerSeleniumTest {
   }
 
   private String baseUrl() {
-    return "http://localhost:" + port;
+    return System.getProperty("selenium.baseUrl", "http://localhost:" + port);
   }
 
   private WebDriver tryCreateChrome() {

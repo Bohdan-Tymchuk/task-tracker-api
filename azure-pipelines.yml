@@ -2,86 +2,227 @@ trigger:
   branches:
     include:
       - main
-      - development
 
 pr:
   branches:
     include:
       - main
-      - development
-
-pool:
-  vmImage: ubuntu-latest
 
 variables:
-  MAVEN_OPTS: -Dmaven.repo.local=$(Pipeline.Workspace)/.m2/repository
+  javaVersion: '21'
+  mavenCache: $(Pipeline.Workspace)/.m2/repository
+  artifactStaging: $(Build.ArtifactStagingDirectory)
+  artifactName: drop
+  serviceConnection: uami-tasktracker
+  testApp: tasktracker-api-test-gwhueuakbzhmejaw
+  prodApp: tasktracker-api-e5akhdazhkemdngk
+  testBaseUrl: https://tasktracker-api-test-gwhueuakbzhmejaw.switzerlandnorth-01.azurewebsites.net
 
-steps:
-  - checkout: self
-    fetchDepth: 0
+stages:
+  - stage: BuildAndTest
+    displayName: Build, test, coverage, static analysis
+    jobs:
+      - job: build
+        pool:
+          vmImage: ubuntu-latest
+        variables:
+          MAVEN_OPTS: -Dmaven.repo.local=$(mavenCache)
+        steps:
+          - checkout: self
+            fetchDepth: 0
 
-  - task: SonarCloudPrepare@3
-    displayName: Prepare SonarCloud analysis
-    condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
-    inputs:
-      SonarCloud: 'SonarCloudServiceConnection'
-      organization: 'x00229514'
-      scannerMode: 'Other'
-      configMode: 'manual'
-      extraProperties: |
-        sonar.java.binaries=$(System.DefaultWorkingDirectory)/target/classes
-        sonar.coverage.jacoco.xmlReportPaths=$(System.DefaultWorkingDirectory)/target/site/jacoco/jacoco.xml
+          - task: Cache@2
+            displayName: Cache Maven local repo
+            inputs:
+              key: maven | "$(Agent.OS)" | pom.xml
+              path: $(mavenCache)
 
-  - task: Cache@2
-    displayName: Cache Maven local repo
-    inputs:
-      key: maven | "$(Agent.OS)" | pom.xml
-      path: $(Pipeline.Workspace)/.m2/repository
+          - task: UseJavaVersion@1
+            displayName: Use JDK $(javaVersion)
+            inputs:
+              versionSpec: '$(javaVersion)'
+              jdkArchitectureOption: 'x64'
 
-  - task: JavaToolInstaller@0
-    displayName: Use JDK 21
-    inputs:
-      versionSpec: '21'
-      jdkArchitectureOption: 'x64'
-      jdkSourceOption: 'PreInstalled'
+          - task: SonarCloudPrepare@3
+            displayName: Prepare SonarCloud analysis
+            condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
+            inputs:
+              SonarCloud: SonarCloudServiceConnection
+              organization: x00229514
+              scannerMode: Other
+              configMode: manual
+              extraProperties: |
+                sonar.java.binaries=$(System.DefaultWorkingDirectory)/target/classes
+                sonar.coverage.jacoco.xmlReportPaths=$(System.DefaultWorkingDirectory)/target/site/jacoco/jacoco.xml
 
-  - script: |
-      echo "Running full build with SonarCloud analysis on branch $(Build.SourceBranch)"
-      mvn -B verify sonar:sonar
-    displayName: Build, test, coverage, static analysis (main)
-    condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
+          - script: |
+              echo "Running full build with SonarCloud analysis on branch $(Build.SourceBranch)"
+              mvn -B -Dmaven.repo.local=$(mavenCache) -Dtest='!**/ui/**Test' verify sonar:sonar
+            displayName: Build, test, coverage, static analysis (main)
+            condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
 
-  - script: |
-      echo "SonarCloud analysis runs only on main; skipping for branch $(Build.SourceBranch)"
-      mvn -B verify
-    displayName: Build, test, coverage, static analysis (non-main)
-    condition: ne(variables['Build.SourceBranch'], 'refs/heads/main')
+          - script: |
+              echo "SonarCloud analysis runs only on main; skipping for branch $(Build.SourceBranch)"
+              mvn -B -Dmaven.repo.local=$(mavenCache) -Dtest='!**/ui/**Test' verify
+            displayName: Build, test, coverage, static analysis (non-main)
+            condition: ne(variables['Build.SourceBranch'], 'refs/heads/main')
 
-  - task: PublishTestResults@2
-    inputs:
-      testResultsFormat: 'JUnit'
-      testResultsFiles: '**/surefire-reports/*.xml'
-      failTaskOnFailedTests: true
-    condition: succeededOrFailed()
+          - task: PublishTestResults@2
+            inputs:
+              testResultsFormat: JUnit
+              testResultsFiles: '**/surefire-reports/*.xml'
+              failTaskOnFailedTests: true
+            condition: succeededOrFailed()
 
-  - task: PublishCodeCoverageResults@2
-    inputs:
-      codeCoverageTool: 'JaCoCo'
-      summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/jacoco.xml'
-      reportDirectory: '$(System.DefaultWorkingDirectory)/**/site/jacoco'
-      failIfCoverageEmpty: true
-    condition: succeededOrFailed()
+          - task: PublishCodeCoverageResults@2
+            inputs:
+              codeCoverageTool: JaCoCo
+              summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/jacoco.xml'
+              reportDirectory: '$(System.DefaultWorkingDirectory)/**/site/jacoco'
+              failIfCoverageEmpty: true
+            condition: succeededOrFailed()
 
-  - task: SonarCloudPublish@3
-    displayName: Publish SonarCloud quality gate
-    inputs:
-      pollingTimeoutSec: '300'
-    condition: and(succeededOrFailed(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+          - task: SonarCloudPublish@3
+            displayName: Publish SonarCloud quality gate
+            inputs:
+              pollingTimeoutSec: '300'
+            condition: and(succeededOrFailed(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
 
-  - task: PublishBuildArtifacts@1
-    displayName: Publish SpotBugs report
-    inputs:
-      PathtoPublish: '$(System.DefaultWorkingDirectory)/target/spotbugsXml.xml'
-      ArtifactName: 'spotbugs-report'
-      publishLocation: 'Container'
-    condition: succeededOrFailed()
+          - script: |
+              mkdir -p $(artifactStaging)
+              cp $(System.DefaultWorkingDirectory)/target/*.jar $(artifactStaging)/
+            displayName: Stage build artifact
+
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: '$(artifactStaging)'
+              artifact: '$(artifactName)'
+            displayName: Publish build artifact
+
+  - stage: Security
+    displayName: Security scan (Snyk)
+    dependsOn: BuildAndTest
+    condition: succeeded()
+    jobs:
+      - job: snyk
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - checkout: self
+          - script: |
+              npm install -g snyk
+              snyk test --all-projects
+            env:
+              SNYK_TOKEN: $(SNYK_TOKEN)
+            displayName: Snyk test
+
+  - stage: DeployTest
+    displayName: Deploy to test
+    dependsOn: Security
+    condition: succeeded()
+    jobs:
+      - deployment: toTest
+        displayName: Deploy to test web app
+        environment: test
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: DownloadPipelineArtifact@2
+                  inputs:
+                    artifact: '$(artifactName)'
+                    path: '$(Pipeline.Workspace)/artifacts'
+                  displayName: Download build artifact
+
+                - task: AzureWebApp@1
+                  displayName: Deploy to test
+                  inputs:
+                    azureSubscription: '$(serviceConnection)'
+                    appName: '$(testApp)'
+                    appType: webAppLinux
+                    package: '$(Pipeline.Workspace)/artifacts/$(artifactName)/*.jar'
+                    runtimeStack: 'JAVA|21-java21'
+
+  - stage: Perf
+    displayName: Performance smoke (k6)
+    dependsOn: DeployTest
+    condition: succeeded()
+    jobs:
+      - job: k6
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - checkout: self
+          - script: |
+              docker run --rm \
+                -v $(System.DefaultWorkingDirectory):/work \
+                -w /work \
+                -e API_BASE=$(testBaseUrl) \
+                -e SUMMARY=/work/k6-summary.json \
+                grafana/k6:latest run perf/smoke.js
+            displayName: k6 smoke against test
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: 'k6-summary.json'
+              artifact: k6-summary
+            condition: always()
+            displayName: Publish k6 summary
+
+  - stage: UAT
+    displayName: Selenium UAT
+    dependsOn: Perf
+    condition: succeeded()
+    jobs:
+      - job: selenium
+        pool:
+          vmImage: ubuntu-latest
+        variables:
+          MAVEN_OPTS: -Dmaven.repo.local=$(mavenCache)
+        steps:
+          - checkout: self
+          - task: Cache@2
+            displayName: Cache Maven local repo
+            inputs:
+              key: maven | "$(Agent.OS)" | pom.xml
+              path: $(mavenCache)
+          - task: UseJavaVersion@1
+            displayName: Use JDK $(javaVersion)
+            inputs:
+              versionSpec: '$(javaVersion)'
+              jdkArchitectureOption: 'x64'
+          - script: |
+              mvn -B -Dmaven.repo.local=$(mavenCache) -Dselenium.baseUrl=$(testBaseUrl) -Dspring.profiles.active=test test -Dtest=**/ui/**Test
+            displayName: Run Selenium UI tests (headless)
+          - task: PublishTestResults@2
+            inputs:
+              testResultsFormat: JUnit
+              testResultsFiles: '**/surefire-reports/*.xml'
+              failTaskOnFailedTests: true
+            condition: succeededOrFailed()
+
+  - stage: DeployProd
+    displayName: Deploy to prod (approval gated)
+    dependsOn: UAT
+    condition: succeeded()
+    jobs:
+      - deployment: toProd
+        displayName: Deploy to prod web app
+        environment: prod
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: DownloadPipelineArtifact@2
+                  inputs:
+                    artifact: '$(artifactName)'
+                    path: '$(Pipeline.Workspace)/artifacts'
+                  displayName: Download build artifact
+
+                - task: AzureWebApp@1
+                  displayName: Deploy to prod
+                  inputs:
+                    azureSubscription: '$(serviceConnection)'
+                    appName: '$(prodApp)'
+                    appType: webAppLinux
+                    package: '$(Pipeline.Workspace)/artifacts/$(artifactName)/*.jar'
+                    runtimeStack: 'JAVA|21-java21'
