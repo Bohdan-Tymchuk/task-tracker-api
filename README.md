@@ -42,17 +42,22 @@ curl -X POST http://localhost:8080/api/tasks/{id}/status \
 - Build: `mvn verify -Dtest='!**/ui/**Test'`, Checkstyle/SpotBugs/JaCoCo, SonarCloud on `main`.
 - Artifacts: JAR published and reused for deploy; test/coverage results published.
 
-![Pipeline summary](assets/ADA-pipeline-summary-and-stages.png)
-![Tests with Playwright UAT](assets/ADA-pipeline-tests-with-playwright-UAT.png)
-![Environments](assets/ADA-project-environments.png)
-![Code coverage](assets/code_coverage.png)
+Pipeline summary shows the full multi-stage flow (build → security → test deploy → k6 → Playwright → prod):
+![Pipeline summary: multi-stage run with build → security → test deploy → k6 → Playwright → prod](assets/ADA-pipeline-summary-and-stages.png)
+
+Test execution in Azure Pipelines (unit/integration + Playwright UAT):
+![Tests tab showing Playwright UAT and unit test execution in Azure Pipelines](assets/ADA-pipeline-tests-with-playwright-UAT.png)
+
+JaCoCo coverage published in pipeline:
+![Code coverage published from JaCoCo](assets/code_coverage.png)
 
 ## Branch Policies and Protection
 - Protected `main`; PRs required with status checks.
 - Azure Pipeline as required check; block force pushes.
 - Suggested flow: feature branches → PR to `main`; prod deploy only from merged `main` with approval.
 
-![Branch protection](assets/github-branch-protection.png)
+GitHub branch protection rules and required status checks:
+![GitHub branch protection rules and required status checks](assets/github-branch-protection.png)
 
 ## Testing Strategy
 - Unit/integration: JUnit + MockMvc, JaCoCo ≥80%.
@@ -67,8 +72,11 @@ curl -X POST http://localhost:8080/api/tasks/{id}/status \
 - Service connection: `sc-tasktracker-api` (managed identity).
 - Pipeline variables: app names, `testBaseUrl`, secrets `SNYK_TOKEN`, `K6_CLOUD_TOKEN`.
 
-![Azure resources](assets/azure-created-services.png)
-![ADO environments](assets/ADA-project-environments.png)
+Azure resources (App Service plan and test/prod Web Apps):
+![Azure resources: App Service plan and test/prod Web Apps](assets/azure-created-services.png)
+
+ADO environments mapped to deployments:
+![ADO environments: test and prod mapped to deployments](assets/ADA-project-environments.png)
 
 ## Deployment Process
 - Build artifact once; deploy same JAR to test, then prod.
@@ -80,19 +88,28 @@ curl -X POST http://localhost:8080/api/tasks/{id}/status \
 - Snyk stage with `SNYK_TOKEN`; fails on findings.
 - k6 smoke (`perf/smoke.js`) against test; `--out cloud` to Grafana/k6 Cloud.
 
-![Snyk dashboard](assets/snyk-main-dashboard-project.png)
-![Snyk PR check](assets/snyk-pr-check-pass.png)
-![k6 dashboard](assets/k6-dashboard.png)
+Snyk dashboard showing project issues and fixes:
+![Snyk dashboard showing project issues and fixes](assets/snyk-main-dashboard-project.png)
+
+Snyk PR check passing in CI:
+![Snyk PR check passing in CI](assets/snyk-pr-check-pass.png)
+
+k6 dashboard in Grafana Cloud:
+![k6 dashboard in Grafana Cloud](assets/k6-dashboard.png)
 
 ## UAT Testing (Playwright)
 - Playwright (Java) headless Chromium suite seeds tasks via API, then validates UI create/filter/update flows.
 - Runs after test deploy; publishes JUnit results.
 
-![Tests tab](assets/test_pass.png)
+Tests tab with Playwright suite passing (Playwright + unit/integration runs):
+![Tests tab with Playwright suite passing](assets/test_pass.png)
 
 ## Pipeline Approval Gates
 - ADO environment `prod` requires manual approval; prod deploy runs only on `main`.
 - Approval email prompts before prod deployment; rejecting keeps prod unchanged.
+
+Approval notification for prod deployment gate:
+![Approval notification for prod deployment gate](assets/email-notification-for-approving-DeoployProd.png)
 
 ## Troubleshooting Guide
 - Maven download issues: `mvn -Dmaven.repo.local=./.m2 verify`.
