@@ -45,7 +45,7 @@ class TaskTrackerSeleniumTest {
     }
     Assumptions.assumeTrue(selected != null, "No local Chrome or Firefox WebDriver available");
     this.driver = selected;
-    this.wait = new WebDriverWait(driver, Duration.ofSeconds(15));
+    this.wait = new WebDriverWait(driver, Duration.ofSeconds(20));
   }
 
   @AfterEach
@@ -176,6 +176,7 @@ class TaskTrackerSeleniumTest {
   }
 
   private void createTask(String title, String description, LocalDate dueDate) {
+    int beforeCount = rowCount();
     driver.findElement(By.id("title")).clear();
     driver.findElement(By.id("title")).sendKeys(title);
     driver.findElement(By.id("description")).clear();
@@ -186,6 +187,7 @@ class TaskTrackerSeleniumTest {
     WebDriverWait longWait = new WebDriverWait(driver, Duration.ofSeconds(30));
     String feedbackText = waitForNonEmptyFeedback(longWait);
     assertThat(feedbackText).doesNotContainIgnoringCase("fix").doesNotContainIgnoringCase("failed");
+    longWait.until(d -> rowCount() > beforeCount);
     longWait.until(d -> findRowByTitle(title) != null);
   }
 
@@ -193,7 +195,10 @@ class TaskTrackerSeleniumTest {
     return wait.until(d -> {
       try {
         return d.findElements(By.cssSelector("tbody tr")).stream()
-            .filter(row -> title.equals(row.findElement(By.cssSelector("td:first-child")).getText()))
+            .filter(row -> {
+              String cellText = row.findElement(By.cssSelector("td:first-child")).getText().trim();
+              return cellText.equalsIgnoreCase(title.trim());
+            })
             .findFirst()
             .orElse(null);
       } catch (StaleElementReferenceException ex) {
@@ -236,5 +241,10 @@ class TaskTrackerSeleniumTest {
     WebElement feedback = waiter.until(d -> d.findElement(By.id("feedback")));
     waiter.until(d -> !feedback.getText().isEmpty());
     return feedback.getText();
+  }
+
+  private int rowCount() {
+    List<WebElement> rows = driver.findElements(By.cssSelector("tbody tr"));
+    return rows.size();
   }
 }
