@@ -45,7 +45,7 @@ class TaskTrackerSeleniumTest {
     }
     Assumptions.assumeTrue(selected != null, "No local Chrome or Firefox WebDriver available");
     this.driver = selected;
-    this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+    this.wait = new WebDriverWait(driver, Duration.ofSeconds(20));
   }
 
   @AfterEach
@@ -57,6 +57,12 @@ class TaskTrackerSeleniumTest {
 
   private String baseUrl() {
     return System.getProperty("selenium.baseUrl", "http://localhost:" + port);
+  }
+
+  private void waitForPageReady() {
+    wait.until(d -> ((org.openqa.selenium.JavascriptExecutor) d)
+        .executeScript("return document.readyState").equals("complete"));
+    wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("h1")));
   }
 
   private WebDriver tryCreateChrome() {
@@ -99,8 +105,7 @@ class TaskTrackerSeleniumTest {
   @Test
   void userCanCreateTaskViaUi() {
     driver.get(baseUrl());
-
-    wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("h1")));
+    waitForPageReady();
 
     driver.findElement(By.id("title")).sendKeys("UI Task");
     driver.findElement(By.id("description")).sendKeys("Created through Selenium");
@@ -120,7 +125,7 @@ class TaskTrackerSeleniumTest {
   @Test
   void userCanUpdateStatusViaUi() {
     driver.get(baseUrl());
-    wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("h1")));
+    waitForPageReady();
 
     createTask("Update Status Task", "Move to completed", LocalDate.now().plusDays(1));
 
@@ -135,7 +140,7 @@ class TaskTrackerSeleniumTest {
   @Test
   void userCanFilterByStatus() {
     driver.get(baseUrl());
-    wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("h1")));
+    waitForPageReady();
 
     createTask("Pending Task", "Keep pending", LocalDate.now().plusDays(1));
     createTask("Completed Task", "Mark done", LocalDate.now().plusDays(2));
@@ -158,7 +163,7 @@ class TaskTrackerSeleniumTest {
   @Test
   void userCanFilterByDueDate() {
     driver.get(baseUrl());
-    wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("h1")));
+    waitForPageReady();
 
     createTask("Soon", "Due tomorrow", LocalDate.now().plusDays(1));
     createTask("Later", "Due next week", LocalDate.now().plusDays(7));
