@@ -37,11 +37,12 @@ stages:
               key: maven | "$(Agent.OS)" | pom.xml
               path: $(mavenCache)
 
-          - task: UseJavaVersion@1
+          - task: JavaToolInstaller@0
             displayName: Use JDK $(javaVersion)
             inputs:
               versionSpec: '$(javaVersion)'
               jdkArchitectureOption: 'x64'
+              jdkSourceOption: 'PreInstalled'
 
           - task: SonarCloudPrepare@3
             displayName: Prepare SonarCloud analysis
@@ -185,11 +186,12 @@ stages:
             inputs:
               key: maven | "$(Agent.OS)" | pom.xml
               path: $(mavenCache)
-          - task: UseJavaVersion@1
+          - task: JavaToolInstaller@0
             displayName: Use JDK $(javaVersion)
             inputs:
               versionSpec: '$(javaVersion)'
               jdkArchitectureOption: 'x64'
+              jdkSourceOption: 'PreInstalled'
           - script: |
               mvn -B -Dmaven.repo.local=$(mavenCache) -Dselenium.baseUrl=$(testBaseUrl) -Dspring.profiles.active=test test -Dtest=**/ui/**Test
             displayName: Run Selenium UI tests (headless)
