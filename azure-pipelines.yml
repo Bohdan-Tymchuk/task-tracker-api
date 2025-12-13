@@ -159,34 +159,22 @@ stages:
           vmImage: ubuntu-latest
         steps:
           - checkout: self
-          - script: |
-              mkdir -p $(System.DefaultWorkingDirectory)/reports
-              SUMMARY_PATH=/work/reports/k6-summary.json
-              docker run --rm --user 0 \
-                -v $(System.DefaultWorkingDirectory):/work \
-                -w /work \
-                -e API_BASE=$(testBaseUrl) \
-                -e SUMMARY=$SUMMARY_PATH \
-                grafana/k6:latest run perf/smoke.js
-              HOST_SUMMARY=$(System.DefaultWorkingDirectory)/reports/k6-summary.json
-              if [ ! -f "$HOST_SUMMARY" ]; then
-                echo "k6 summary not found at $HOST_SUMMARY"
-                exit 1
-              fi
+          - task: k6@1
             displayName: k6 smoke against test
-          - task: PublishPipelineArtifact@1
             inputs:
-              targetPath: '$(System.DefaultWorkingDirectory)/reports/k6-summary.json'
-              artifact: k6-summary
-            condition: always()
-            displayName: Publish k6 summary
+              script: perf/smoke.js
+              workingDirectory: '$(System.DefaultWorkingDirectory)'
+              arguments: '--out cloud'
+            env:
+              API_BASE: $(testBaseUrl)
+              K6_CLOUD_TOKEN: $(K6_CLOUD_TOKEN)
 
   - stage: UAT
-    displayName: Selenium UAT
+    displayName: Playwright UAT
     dependsOn: Perf
     condition: succeeded()
     jobs:
-      - job: selenium
+      - job: playwright
         pool:
           vmImage: ubuntu-latest
         variables:
