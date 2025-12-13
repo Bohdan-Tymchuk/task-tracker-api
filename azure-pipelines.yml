@@ -111,7 +111,12 @@ stages:
         steps:
           - checkout: self
           - script: |
+              if [ -z "$SNYK_TOKEN" ]; then
+                echo "SNYK_TOKEN is not set or not available to this pipeline run."
+                exit 1
+              fi
               npm install -g snyk
+              snyk auth "$SNYK_TOKEN"
               snyk test --all-projects
             env:
               SNYK_TOKEN: $(SNYK_TOKEN)
