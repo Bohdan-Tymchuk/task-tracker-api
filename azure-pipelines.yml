@@ -198,6 +198,10 @@ stages:
             inputs:
               key: maven | "$(Agent.OS)" | pom.xml
               path: $(mavenCache)
+          - script: |
+              sudo apt-get update
+              sudo apt-get install -y libicu-dev libevent-2.1-7 gstreamer1.0-libav libgstreamer-plugins-bad1.0-0 libflite1
+            displayName: Install Playwright browser dependencies
           - task: JavaToolInstaller@0
             displayName: Use JDK $(javaVersion)
             inputs:
@@ -205,8 +209,8 @@ stages:
               jdkArchitectureOption: 'x64'
               jdkSourceOption: 'PreInstalled'
           - script: |
-              mvn -B -Dmaven.repo.local=$(mavenCache) -Dspring.profiles.active=test test -Dtest=**/ui/**Test
-            displayName: Run Selenium UI tests (headless)
+              mvn -B -Dmaven.repo.local=$(mavenCache) -Dspring.profiles.active=test clean test -Dtest=*Playwright*
+            displayName: Run Playwright UI tests (headless)
           - task: PublishTestResults@2
             inputs:
               testResultsFormat: JUnit

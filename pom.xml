@@ -28,6 +28,7 @@
         <sonar.projectKey>X00229514_task-tracker-api</sonar.projectKey>
         <sonar.organization>x00229514</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+        <playwright.version>1.47.0</playwright.version>
     </properties>
 
     <dependencies>
@@ -57,6 +58,12 @@
             <groupId>io.github.bonigarcia</groupId>
             <artifactId>webdrivermanager</artifactId>
             <version>6.1.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.microsoft.playwright</groupId>
+            <artifactId>playwright</artifactId>
+            <version>${playwright.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
