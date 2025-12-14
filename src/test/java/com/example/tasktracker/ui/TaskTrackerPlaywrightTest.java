@@ -126,10 +126,15 @@ class TaskTrackerPlaywrightTest {
     page.navigate(baseUrl());
     waitForRowsAtLeast(2);
     page.locator("details.filters-toggle summary").click();
-    page.fill("#dueBefore", LocalDate.now().plusDays(2).toString());
-    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Apply")).click();
+    String cutoff = LocalDate.now().plusDays(2).toString();
+    page.fill("#dueBefore", cutoff);
+    page.waitForResponse(
+        resp -> resp.url().contains("/api/tasks") && resp.url().contains("dueBefore"),
+        () -> page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Apply"))
+            .click());
 
-    page.waitForSelector("tbody tr");
+    page.waitForFunction(
+        "expected => document.querySelectorAll('tbody tr').length === expected", 1);
     assertThat(page.locator("tbody tr").count()).isEqualTo(1);
     assertThat(page.locator("tbody tr td:first-child").textContent()).contains("Soon");
   }
